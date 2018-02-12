@@ -20,6 +20,7 @@ import importlib
 from Build.Objects.air_conditioner import AirConditionerSimple
 from Build.Objects.battery import Battery
 from Build.Objects.fixed_consumption import FixedConsumption
+from Build.Objects.load_profile_eud import LoadProfile
 from Build.Objects.grid_controller import GridController
 from Build.Objects.light import Light
 from Build.Objects.pv import PV
@@ -49,7 +50,8 @@ class SimulationSetup:
             'air_conditioner': [AirConditionerSimple, 'compressor_operating_power', 'initial_temp', 'temp_max_delta',
                                 'initial_set_point', 'price_to_setpoint', 'temperature_schedule',
                                 'precooling_price_threshold', 'compressor_cooling_rate', 'heat_exchange_rate'],
-            'fixed_consumption': [FixedConsumption, 'desired_power_level']
+            'fixed_consumption': [FixedConsumption, 'desired_power_level'],
+            'load_profile_eud': [LoadProfile, 'data_filename']
         }
 
     ##
@@ -208,7 +210,7 @@ class SimulationSetup:
 
     ##
     # Reads in the PV csv data containing information about the proportion of power used at different times during
-    # the simulation.
+    # the simulation. Can use PV Watts input
     # @param filename the input filename containing a list of times and associated percentages of peak power
     # @return a list of tuples of time (seconds), and power produced (watts).
 
@@ -217,14 +219,41 @@ class SimulationSetup:
         pv_data = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))),
                                "scenario_data/pv_data/{}".format(filename))
         with open(pv_data, 'r') as data:
-            for line in data:
+            # parsing settings depend on whether PVWatts or LPDM data
+            if filename == "pvwatts_hourly.csv":
+                # Parse data from a PV Watts hourly data format
+                DATASTART = 18
+                DCPOWERIND = 9
+                TIMEPARSE = False
+                POWERSCALAR = 1
+                for i, line in enumerate(data):
+                    # Find the kW solar capacity of the PVWatts data
+                    if i == 6:
+                        parts = line.strip().split(',')
+                        POWERSCALAR = float(parts[1])*1000
+                        break
+            else:
+                # Parse data from LPDM power ratio format
+                DATASTART = 0
+                DCPOWERIND = 1
+                TIMEPARSE = True
+                POWERSCALAR = 1
+            # Go through each line in CSV and parse power and time data 
+            data.seek(0)
+            for i, line in enumerate(data):
+                if i < DATASTART:
+                    continue
                 parts = line.strip().split(',')
-                if len(parts) == 2 and parts[0].strip():
+                if len(parts) >= DCPOWERIND + 1 and parts[0].strip():
                     time_parts = parts[0].split(':')
-                    if len(time_parts) == 3:
+                    if TIMEPARSE and len(time_parts) == 3:
+                        # For LPDM format, Parse time from H:M:S format
                         time_secs = (int(time_parts[0]) * 60 * 60) + (int(time_parts[1]) * 60) + int(time_parts[2])
-                        power_ratio = float(parts[1])
-                        data_out.append((time_secs, power_ratio))
+                    else:
+                        # For PVWatts format, get time from row index in hourly increments
+                        time_secs = (i - DATASTART)*3600
+                    power_ratio = float(parts[DCPOWERIND])/POWERSCALAR
+                    data_out.append((time_secs, power_ratio))
         return data_out
 
     ##

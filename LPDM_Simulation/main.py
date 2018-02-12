@@ -16,13 +16,25 @@ Main run portal for the simulation. Calls run simulation in simulation.py.
 import sys
 
 import Build.Simulation_Operation.simulation as sim
+import Build.Output.plotter as plt
 
 if __name__ == "__main__":
-    if len(sys.argv) >= 3:
+    if len(sys.argv) == 3 and sys.argv[1] == 'plot': # python3 main.py plot simulation-1
+        plt.create_plots(sys.argv[2])
+    elif len(sys.argv) == 3 and sys.argv[1] == 'csv': # python3 main.py csv simulation-1
+        plt.create_CSVs(sys.argv[2])
+    elif len(sys.argv) == 3 and sys.argv[1] == 'csvplot': # python3 main.py csvplot simulation-1
+        plt.create_CSVs(sys.argv[2])
+        plt.create_plots(sys.argv[2])
+    elif len(sys.argv) == 2 and sys.argv[1] == 'clean': # python3 main.py clean
+        plt.clean_workspace()
+    elif len(sys.argv) >= 3:
         sim.run_simulation(sys.argv[1], sys.argv[2:])
+        plt.create_CSVs(plt.get_last_log())
+        plt.create_plots(plt.get_last_log())
     elif len(sys.argv) == 2:
         sim.run_simulation(sys.argv[1], [])
+        plt.create_CSVs(plt.get_last_log())
+        plt.create_plots(plt.get_last_log())
     else:
         raise FileNotFoundError("Must enter a configuration filename")
-
-    # TODO: Create a graphing function here.
