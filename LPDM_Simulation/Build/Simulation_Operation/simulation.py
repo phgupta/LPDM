@@ -417,12 +417,14 @@ class SimulationSetup:
 
         self.setup_logging(config_filename=config_file, config=param_dict, override_args=override_args_list)
 
+
         # Transform the override list into a dictionary of override key, value dictionary
         overrides = self.parse_inputs_to_dict(override_args_list)
 
         run_time_days = param_dict['run_time_days']
         run_time_days = int(overrides.get('run_time_days', run_time_days))
         self.end_time = SECONDS_IN_DAY * run_time_days
+        logging.getLogger("lpdm").info("Total Run Time (s): {}".format(self.end_time))
 
         if 'devices' not in param_dict:
             raise ValueError("Tried to run a simulation with no devices!")

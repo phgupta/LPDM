@@ -26,7 +26,6 @@ import PyQt5
 import seaborn as sb
 
 LOGSDIR = 'logs' # location of logs relative to base directory
-FIRSTLINE = 3 # first line index of log
 PLOTSDIR = 'Plots' # location of plots relative to base directory
 
 ##################################################################
@@ -77,9 +76,17 @@ def create_CSVs(sim_folder):
         os.makedirs(csv_directory)
     with open(log_path) as file:
         lines = file.readlines()
+    # find first line and parse run time
+    firstLine = 0
+    for ind in range(0, len(lines)):
+        firstLine = ind + 1
+        line = lines[ind]
+        runTime = parse_runtime(line)
+        if runTime != None:
+            break
     # get list of devices
     devices = []
-    for ind in range(FIRSTLINE, len(lines)):
+    for ind in range(firstLine, len(lines)):
         line = lines[ind]
         device = parse_initialize(line)
         if device != None:
@@ -97,18 +104,28 @@ def create_CSVs(sim_folder):
             device_data[device] = [[time, power]]
         else:
             device_data[device].append([time, power])
-    # delete small time deviations
+    # delete small time deviations and add end time
     for device in device_data.keys():
         dataArr = device_data[device]
+        # delete small time deviations
         i = 0
         while i < len(dataArr)-2:
             if float(dataArr[i+1][0]) - float(dataArr[i][0]) < 10:
                 dataArr.pop(i)
             else:
                 i = i + 1
+        # add end time
+        dataArr.append([runTime, dataArr[-1][1]])
     # create output directory and write CSVs
     for device in device_data:
         write_CSV(os.path.join(csv_directory, device + '.csv'), device_data[device])
+
+def parse_runtime(line):
+    split = line.split(': ')
+    if split[0] == "Total Run Time (s)":
+        return int(split[1])
+    else:
+        return None
 
 def parse_initialize(line):
     split = line.split('; ')
@@ -169,7 +186,7 @@ def read_csv(csv_path):
     file_handle = open(csv_path, 'rU')
     reader = csv.reader(file_handle)
     datalist = list(reader)
-    datalist = datalist[1:] # get rid of header
+    #datalist = datalist[1:] # get rid of header
     data = np.array(datalist)
     data = data.astype('float')
     file_handle.close()
@@ -197,11 +214,14 @@ def power_plot(data, output_directory, output_name):
 def modifyToZOH(time, data):
     # insert entries for zero order hold interpolation
     arr = np.array([time, data]).T
-    r = 1
-    while r < len(arr[:,0]):
-        newRow = np.array([arr[r,0], arr[r-1, 1]])
-        arr = np.insert(arr, r, newRow, axis=0)
-        r = r + 2
+    if len(arr[:,0]) == 0:
+        arr = np.zeros((1,1))
+    elif len(arr[:,0]) >= 2:
+        r = 1
+        while r < len(arr[:,0]):
+            newRow = np.array([arr[r,0], arr[r-1, 1]])
+            arr = np.insert(arr, r, newRow, axis=0)
+            r = r + 2
     return arr[:,0], arr[:,1]
 
 def tranPlot(fig, subplot, ylabel, startTime, duration, timeScale, tickInc):
