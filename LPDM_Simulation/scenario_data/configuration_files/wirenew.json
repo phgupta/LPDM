@@ -1,0 +1,102 @@
+{
+    "run_time_days": 1,
+    "console_log_level": 20,
+    "file_log_level": 20,
+    "devices": {
+        "grid_controllers": [
+            {
+                "device_id": "gc_1",
+                "device_type": "grid_controller",
+                "static_price": true,
+                "uuid": 12, 
+                "threshold_alloc": 1, 
+                "message_latency": 1,  
+                "price_logic": "static_price",
+                "connected_devices": [
+                    {"device_id": "cv_1", "voltage": 100, "length": 0},
+                    {"device_id": "utm_1", "voltage": 100, "length": 0}], 
+                "battery": {
+                    "battery_id": "battery_1",
+                    "device_type": "battery",
+                    "capacity": 2000.0,
+                    "max_discharge_rate": 2000.0, 
+                    "max_charge_rate": 2000.0, 
+                    "price_logic": "hourly_preference", 
+                    "starting soc": 1.0
+                }
+            }
+        ],
+        "pvs":[
+        ], 
+        "utility_meters": [
+            {
+                "device_id": "utm_1",
+                "uuid": 10,
+                "device_type": "utility_meter",
+                "capacity": 5000.0,
+                "schedule": {
+                    "multiday": 0, 
+                    "items": [[0, "turn_on"]]
+                }, 
+                "buy_price_schedule": {
+                    "multiday": 1, 
+                    "items": [[0, 0.10]]
+                }, 
+                "sell_price_schedule": {
+                    "multiday": 1, 
+                    "items": [[0, 0.10]]
+                }
+            }
+        ],
+        "euds": [
+            {
+                "device_id": "eud_3",
+                "uuid": 3,
+                "eud_type": "fixed_consumption",
+                "desired_power_level": 100.0,
+                "constant_power_output": true,
+                "schedule": {
+                    "multiday": 1, 
+                    "items": [[0, "start_up"]] 
+                }
+            }
+        ],
+        "converters": [
+            {
+                "device_id": "cv_1",
+                "uuid": 15,
+                "capacity": 2000,
+                "efficiency_curve": [
+                    {"capacity": 0.1, "efficiency": 1.0},
+                    {"capacity": 0.2, "efficiency": 1.0},
+                    {"capacity": 0.3, "efficiency": 1.0},
+                    {"capacity": 0.4, "efficiency": 1.0},
+                    {"capacity": 0.5, "efficiency": 1.0},
+                    {"capacity": 0.6, "efficiency": 1.0},
+                    {"capacity": 0.7, "efficiency": 1.0},
+                    {"capacity": 0.75, "efficiency": 1.0},
+                    {"capacity": 0.8, "efficiency": 1.0},
+                    {"capacity": 0.9, "efficiency": 1.0},
+                    {"capacity": 1, "efficiency": 1.0}
+                ],
+                "device_input": {
+                    "device_id": "gc_1", "voltage": 100, "length": 0
+                },
+                "device_output": {
+                    "device_id": "eud_3", "voltage": 100, "length": 1000, "gauge":"4", "current_type":"DC"
+                }
+            }
+        ],
+        "wires": [
+            {
+                "wire_id": "gc1_cv1", "voltage": 100, "length": 0
+            },
+            {
+                "wire_id": "cv1_eud3", "voltage": 100, "length": 1000, "gauge":"4", "current_type":"DC"
+            },
+            {
+                "wire_id": "gc1_utm1", "voltage": 100, "length": 0
+            }
+        ]
+    }
+}

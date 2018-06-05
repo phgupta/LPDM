@@ -296,14 +296,9 @@ class GridController(GridEquipment):
         # add in additional wire loss
         # if wire_loss is non-zero, then there's a wire attached
         wire_loss = self.calculate_wire_loss(target_id, power_amt)
-        if wire_loss:
-            if power_amt:
-                # if power_amt is non-zero, add in additional wire loss
-                power_amt += wire_loss
-                self.update_wire_loss_in(target_id, abs(wire_loss))
-            else:
-                # power_amt is zero so no wire loss
-                self.update_wire_loss_in(target_id, 0)
+        power_amt += wire_loss
+        self.update_wire_loss_in(target_id, abs(wire_loss))
+
         self._logger.info(self.build_log_notation(message="POWER to {}".format(target_id),
                                                   tag="power_msg", value=power_amt))
 

@@ -1,3 +1,7 @@
+
+
+# old, do not use, can probably delete
+
 from .wire import Wire
 from .current_type import CurrentType
 
@@ -8,7 +12,8 @@ class Wire18Dc(Wire):
 
     @property
     def mohm_per_m(self):
-        return 20.95
+        return 1000
+        #return 20.95
     
     @property
     def current_type(self):

@@ -461,14 +461,19 @@ class SimulationSetup:
         # connect 2 devices together without any wire information
         device_id = connection_info["device_id"]
         voltage = connection_info["voltage"]
-        wire_class = connection_info["wire_class"]
-        length_m = connection_info["length_m"]
+        #wire_class = connection_info["wire_class"]
+        resistance = connection_info.get("resistance", None)
+        length = connection_info.get("length", 0)
+        gauge = connection_info.get("gauge", '14')
+        current_type = connection_info.get("current_type", 'DC')
         # load the module
         m = importlib.import_module("Build.Objects.wire")
+        from Build.Objects.wire.wire import Wire
         # get the class, will raise AttributeError if class cannot be found
-        WireClass = getattr(m, wire_class)
+        #WireClass = getattr(m, wire_class)
         # build the wire object
-        wire = WireClass(length_m, voltage)
+        #wire = WireClass(length_m, voltage)
+        wire = Wire(voltage, resistance, length, gauge, current_type)
 
         device_b = self.supervisor.get_device(device_id)
         device_a.register_device(device_b, device_id, 1, wire)
