@@ -165,6 +165,10 @@ class Device(metaclass=ABCMeta):
         float:
             The wire loss rate of the wire connected to device_id
         """
+        # if wire:
+        #     print(str(amount) + " " + str(wire))
+        # else:
+        #     print(str(self._device_id) + "  " +str(device_id) + "  " + str(self._wires.keys()))
         if amount < 0:
             # only calculates wire loss for positive amount
             return 0
@@ -358,6 +362,12 @@ class Device(metaclass=ABCMeta):
             self._logger.info(
                 self.build_log_notation("registered {}".format(device_id))
             )
+        elif value > 0 and device_id in self._connected_devices and not wire is None:
+            self._wires[device_id] = wire
+            self._is_wired = True
+            self._logger.info(
+                self.build_log_notation("added wire to {}".format(device_id))
+            )            
         # else:
         #     raise Exception("Device {} already registered to {}".format(device_id, self._device_id))
             # if device_id in self._connected_devices:

@@ -1,6 +1,6 @@
 {
     "run_time_days": 6,
-    "console_log_level": 50,
+    "console_log_level": 20,
     "file_log_level": 20,
     "devices": {
         "grid_controllers": [

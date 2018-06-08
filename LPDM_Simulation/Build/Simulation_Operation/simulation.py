@@ -25,6 +25,7 @@ from Build.Objects.grid_controller import GridController
 from Build.Objects.light import Light
 from Build.Objects.pv import PV
 from Build.Objects.converter.converter import Converter
+from Build.Objects.wire import Wire
 from Build.Objects.utility_meter import UtilityMeter
 from Build.Simulation_Operation.logger import SimulationLogger
 from Build.Simulation_Operation.supervisor import Supervisor
@@ -456,6 +457,7 @@ class SimulationSetup:
         device_b = self.supervisor.get_device(device_id_b)
         device_a.register_device(device_b, device_id_b, 1)
         device_b.register_device(device_a, device_id_a, 1)
+        print("registered no wire {} -> {}".format(device_id_b, device_id_a))
     
     def connect_devices_with_wire(self, device_id_a, device_a, connection_info):
         # connect 2 devices together without any wire information
@@ -468,7 +470,6 @@ class SimulationSetup:
         current_type = connection_info.get("current_type", 'DC')
         # load the module
         m = importlib.import_module("Build.Objects.wire")
-        from Build.Objects.wire.wire import Wire
         # get the class, will raise AttributeError if class cannot be found
         #WireClass = getattr(m, wire_class)
         # build the wire object
@@ -478,7 +479,7 @@ class SimulationSetup:
         device_b = self.supervisor.get_device(device_id)
         device_a.register_device(device_b, device_id, 1, wire)
         device_b.register_device(device_a, device_id_a, 1, wire)
-        print("registered {} -> {}".format(device_id, device_id_a))
+        print("registered with wire {} -> {}".format(device_id, device_id_a))
 
     ##
     # Takes a list of keyword arguments in the form of strings such as 'key=value' and outputs them as

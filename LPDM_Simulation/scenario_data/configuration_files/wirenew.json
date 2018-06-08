@@ -13,12 +13,12 @@
                 "message_latency": 1,  
                 "price_logic": "static_price",
                 "connected_devices": [
-                    {"device_id": "cv_1", "voltage": 100, "length": 0},
-                    {"device_id": "utm_1", "voltage": 100, "length": 0}], 
+                    "cv_1",
+                    "utm_1"], 
                 "battery": {
                     "battery_id": "battery_1",
                     "device_type": "battery",
-                    "capacity": 2000.0,
+                    "capacity": 0.00001,
                     "max_discharge_rate": 2000.0, 
                     "max_charge_rate": 2000.0, 
                     "price_logic": "hourly_preference", 
@@ -67,35 +67,13 @@
                 "uuid": 15,
                 "capacity": 2000,
                 "efficiency_curve": [
-                    {"capacity": 0.1, "efficiency": 1.0},
-                    {"capacity": 0.2, "efficiency": 1.0},
-                    {"capacity": 0.3, "efficiency": 1.0},
-                    {"capacity": 0.4, "efficiency": 1.0},
-                    {"capacity": 0.5, "efficiency": 1.0},
-                    {"capacity": 0.6, "efficiency": 1.0},
-                    {"capacity": 0.7, "efficiency": 1.0},
-                    {"capacity": 0.75, "efficiency": 1.0},
-                    {"capacity": 0.8, "efficiency": 1.0},
-                    {"capacity": 0.9, "efficiency": 1.0},
-                    {"capacity": 1, "efficiency": 1.0}
+                    {"capacity": 0.1, "efficiency": 0.5},
+                    {"capacity": 1, "efficiency": 0.5}
                 ],
                 "device_input": {
-                    "device_id": "gc_1", "voltage": 100, "length": 0
+                    "device_id": "gc_1", "voltage": 100, "length": 0, "gauge":"4", "current_type":"DC"
                 },
-                "device_output": {
-                    "device_id": "eud_3", "voltage": 100, "length": 1000, "gauge":"4", "current_type":"DC"
-                }
-            }
-        ],
-        "wires": [
-            {
-                "wire_id": "gc1_cv1", "voltage": 100, "length": 0
-            },
-            {
-                "wire_id": "cv1_eud3", "voltage": 100, "length": 1000, "gauge":"4", "current_type":"DC"
-            },
-            {
-                "wire_id": "gc1_utm1", "voltage": 100, "length": 0
+                "device_output": "eud_3"
             }
         ]
     }
