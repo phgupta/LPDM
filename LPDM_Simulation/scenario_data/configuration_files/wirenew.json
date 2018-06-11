@@ -13,20 +13,28 @@
                 "message_latency": 1,  
                 "price_logic": "static_price",
                 "connected_devices": [
+                    "eud_3",
                     "cv_1",
                     "utm_1"], 
                 "battery": {
                     "battery_id": "battery_1",
                     "device_type": "battery",
-                    "capacity": 0.00001,
-                    "max_discharge_rate": 2000.0, 
-                    "max_charge_rate": 2000.0, 
+                    "capacity": 1.0,
+                    "max_discharge_rate": 10000000, 
+                    "max_charge_rate": 1000000, 
                     "price_logic": "hourly_preference", 
                     "starting soc": 1.0
                 }
             }
         ],
-        "pvs":[
+        "pvs": [
+            {
+                "message_latency": 1, 
+                "data_filename": "pvwatts_hourly.csv", 
+                "uuid": 4, 
+                "device_id": "pv_1", 
+                "peak_power": 1000
+            }
         ], 
         "utility_meters": [
             {
@@ -65,15 +73,13 @@
             {
                 "device_id": "cv_1",
                 "uuid": 15,
-                "capacity": 2000,
+                "capacity": 1000000,
                 "efficiency_curve": [
-                    {"capacity": 0.1, "efficiency": 0.5},
-                    {"capacity": 1, "efficiency": 0.5}
+                    {"capacity": 0, "efficiency": 1.0},
+                    {"capacity": 1, "efficiency": 1.0}
                 ],
-                "device_input": {
-                    "device_id": "gc_1", "voltage": 100, "length": 0, "gauge":"4", "current_type":"DC"
-                },
-                "device_output": "eud_3"
+                "device_input": "pv_1",
+                "device_output": "gc_1"
             }
         ]
     }

@@ -42,6 +42,10 @@ class Converter(GridEquipment):
         self._load_loss = 0.0
         self._efficiency_curve = None
         self.build_efficiency_curve()
+
+        self._converter_loss_power = 0.0
+        self._converter_loss_energy = 0.0
+        self._time_last_loss_calc = self._time
     
     def build_efficiency_curve(self):
         "Build the efficiency curve object"
@@ -182,7 +186,7 @@ class Converter(GridEquipment):
         )
         receiver_id = self.get_receiving_device(message.sender_id)
         # request extra to account for the converter loss
-        converter_loss = self._efficiency_curve.get_converter_loss(message.value)
+        converter_loss = self._efficiency_curve.get_converter_loss_load(message.value)
         # reequest extra to account for wire loss
         wire_loss = self.calculate_wire_loss(receiver_id, message.value)
         self.send_request_message(receiver_id, message.value + converter_loss + wire_loss)
@@ -236,9 +240,13 @@ class Converter(GridEquipment):
         target_device = self._connected_devices[target_id]
         # add extra to account for the converter loss if power is flowing
         if power_amt:
-            converter_loss = self._efficiency_curve.get_converter_loss(power_amt)
             if power_amt > 0:
+                converter_loss = self._efficiency_curve.get_converter_loss_load(power_amt)
                 power_amt += converter_loss
+            else:
+                converter_loss = self._efficiency_curve.get_converter_loss_source(power_amt)
+                power_amt += converter_loss
+            self.update_converter_loss(converter_loss)
         # add extra to account for wire loss
         wire_loss = self.calculate_wire_loss(target_id, power_amt)
         power_amt += wire_loss
@@ -248,10 +256,33 @@ class Converter(GridEquipment):
         self._logger.info(self.build_log_notation(message="POWER to {}".format(target_id),
                                                   tag="power_msg", value=power_amt))
 
+    def update_converter_loss(self, converter_loss_power):
+        "Update the converter loss rate for power flowing into the device"
+        previous = self._converter_loss_power
+        # if previous and converter_loss_power:
+        self.sum_converter_loss(previous)
+        self._converter_loss_power = converter_loss_power
+
+    def sum_converter_loss(self, converter_loss_power):
+        time_diff = self._time - self._time_last_loss_calc
+        if time_diff > 0:
+            # Wh = W*s*(h/3600s)
+            converter_loss_energy = converter_loss_power * (time_diff / 3600.0)
+            self._converter_loss_energy += converter_loss_energy
+            self._logger.info(
+                self.build_log_notation(
+                    message="Calculate converter loss, dt = {} h, rate = {} W, energy = {} Wh".format( \
+                        time_diff / 3600.0, converter_loss_power, converter_loss_energy),
+                    tag="converter_loss",
+                    value=converter_loss_energy
+            ))
+        self._time_last_loss_calc = self._time
+
     def last_wire_loss_calc(self):
         for (device_id, wire_loss_rate) in self._wire_loss_info_in.items():
             if wire_loss_rate:
                 self.update_wire_loss_in(device_id, wire_loss_rate)
+        self.update_converter_loss(0.0)
 
     def device_specific_calcs(self):
         pass
