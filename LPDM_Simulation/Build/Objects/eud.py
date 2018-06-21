@@ -53,6 +53,16 @@ class Eud(Device):
     # ___________________ BASIC FUNCTIONS ________________
 
     ##
+    # Gets price
+    def get_price(self):
+        return self._price
+
+    ##
+    # Sets price
+    def set_price(self, new_price):
+        self._price = new_price
+
+    ##
     # Turns on the EUD, seeking to update to its desired power level. Previous state functions such as price
     # are maintained. If EUD is already on, does not do anything.
     def start_up(self):
@@ -234,7 +244,7 @@ class Eud(Device):
                     if remaining <= 0:
                         break
 
-            # TODO: Make this dependent on prices instead. Request all from cheapest first. 
+            # TODO: Make this dependent on prices instead. Request all from cheapest first.
             if remaining > 0:
                 num_gcs = len(gcs)
                 if num_gcs:
@@ -297,3 +307,13 @@ class Eud(Device):
     @abstractmethod
     def device_specific_calcs(self):
         pass
+
+    ##
+    #
+    def generate_demand_curve(self, prices):
+        old_price = self._price
+        demand_data = [0] * len(prices)
+        for x,self._price in enumerate(prices):
+            demand_data[x] = self.calculate_desired_power_level()
+        self._price = old_price
+        return demand_data

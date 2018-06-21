@@ -58,10 +58,14 @@ class AirConditionerSimple(Eud):
         self._compressor_is_on = False
         self._compressor_should_be_on = False
 
+        # average power consumption variable
+
         if temperature_schedule is None:
             raise ValueError("tried to initialize air conditioner without temperature schedule")
         self._temperature_schedule = temperature_schedule
         self.schedule_outdoor_temperature_events(self._temperature_schedule, total_runtime)
+
+    # Estimate average power consumption (method)
 
     ##
     # Schedules all of the temperature change events each day for the entire duration of the simulation.
@@ -190,6 +194,7 @@ class AirConditionerSimple(Eud):
         self.adjust_internal_temperature()
         self.reassess_setpoint()
         self.control_compressor_operation()
+        # Update demand curve
 
     ##
     # This air conditioner consumes what it requires to run the compressor if the compressor should be on.
@@ -217,5 +222,3 @@ class AirConditionerSimple(Eud):
 
     def device_specific_calcs(self):
         pass
-
-

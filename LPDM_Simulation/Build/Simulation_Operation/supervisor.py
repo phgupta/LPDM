@@ -17,8 +17,10 @@ calculating some of the final simulation power statistics.
 """
 
 import logging
+import csv
 
 from Build.Simulation_Operation.queue import PriorityQueue
+# from Build.Simulation_Operation.supply_demand_model import supply_demand_model
 
 
 class Supervisor:
@@ -114,3 +116,24 @@ class Supervisor:
         for device in self._devices.values():
             device.finish(end_time)
         self.total_calcs()
+
+    def update_demand_curve(self):
+        # For each GC
+        # Sweep price by broadcasting range of prices
+        # Measure power draw
+        # Export to CSV (GC ID, time, price, power)
+
+        prices = [x * 0.01 for x in range(0, 50)]
+        total_demand_curve = [0] * len(prices)
+        gcs = (device for device in self._devices.values() if device.get_type() == "grid_controller")
+        for gc in gcs:
+            self._logger.info("looping over gc")
+            connected_devices = gc.get_connected_devices()
+            euds = (connected_device for connected_device_id, connected_device in connected_devices.items() if connected_device_id.startswith("eud"))
+            for eud in euds:
+                    self._logger.info("hi")
+                    total_demand_curve = [a + b for a, b in zip(total_demand_curve, eud.generate_demand_curve(prices))]
+        total_demand_curve = zip(prices,total_demand_curve)
+        with open('demand.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerows(total_demand_curve)

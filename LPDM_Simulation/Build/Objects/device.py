@@ -103,6 +103,11 @@ class Device(metaclass=ABCMeta):
         return self._device_type
 
     ##
+    # Getter for the Device's connected devices
+    def get_connected_devices(self):
+        return self._connected_devices
+
+    ##
     # Updates the local time of the device.
     # This method is only called by the Supervisor once it is about to process a next initial event.
     # @param new_time the time to update to
@@ -444,7 +449,3 @@ class Device(metaclass=ABCMeta):
 # TODO: Linear interpolation in Air Conditioner?
 # TODO: Loads->Powerflows
 # TODO: Load profile EUD.
-
-
-
-
