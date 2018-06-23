@@ -186,7 +186,7 @@ class Converter(GridEquipment):
         )
         receiver_id = self.get_receiving_device(message.sender_id)
         # request extra to account for the converter loss
-        converter_loss = self._efficiency_curve.get_converter_loss_load(message.value)
+        converter_loss = self._efficiency_curve.get_converter_loss(message.value)
         # reequest extra to account for wire loss
         wire_loss = self.calculate_wire_loss(receiver_id, message.value)
         self.send_request_message(receiver_id, message.value + converter_loss + wire_loss)
@@ -240,12 +240,12 @@ class Converter(GridEquipment):
         target_device = self._connected_devices[target_id]
         # add extra to account for the converter loss if power is flowing
         if power_amt:
-            if power_amt > 0:
-                converter_loss = self._efficiency_curve.get_converter_loss_load(power_amt)
-                power_amt += converter_loss
-            else:
-                converter_loss = self._efficiency_curve.get_converter_loss_source(power_amt)
-                power_amt += converter_loss
+            # if power_amt > 0:
+            #     converter_loss = self._efficiency_curve.get_converter_loss(power_amt)
+            # else:
+            #     converter_loss = self._efficiency_curve.get_converter_loss_source(power_amt)
+            converter_loss = self._efficiency_curve.get_converter_loss(power_amt)
+            power_amt += converter_loss
             self.update_converter_loss(converter_loss)
         # add extra to account for wire loss
         wire_loss = self.calculate_wire_loss(target_id, power_amt)
