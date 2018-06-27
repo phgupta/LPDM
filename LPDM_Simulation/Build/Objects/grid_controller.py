@@ -448,7 +448,14 @@ class GridController(Device):
             else:
                 self._logger.info(self.build_log_notation(message="could only output {}W".format(provided),
                                                           tag="insufficient power out", value=provided))
-            self.send_power_message(source_id, provided)
+
+            # if source is PV, then turn off PV
+            pvs = [key for key in self._connected_devices.keys() if key.startswith("pv")]
+            if source_id in pvs:
+                self._logger.info(self.build_log_notation(message="Wasting {}W from {}".format(source_demanded_power,source_id),
+                                                          tag="wasted power", value=source_demanded_power))
+            else:
+                self.send_power_message(source_id, provided)
 
     ##
     # Sees what the GC has freely available to increase from its existing allocates compared to existing loads
@@ -719,20 +726,20 @@ class GridControllerPriceLogic(metaclass=ABCMeta):
         pass
 
 
-""" 
+"""
 
 Grid controller price logic class which uses a weighted price based on the time that price was maintained to calculate
-its average hourly prices and average price statistics. 
+its average hourly prices and average price statistics.
 
 Functional Review: Produces strange results because it is based entirely on current loads, rather than on any potential
-power that this grid controller has access to. For example, this algorithm works effectively when the Grid Controller 
-is currently drawing in power from the utility meter or another grid controller to support its current load balance. 
-However, most of the time when it is simply drawing on the battery to funnel to other entities, it doesn't have the 
-necessary information and simply relies on its initial price as a fallback value, which doesn't seem to make sense. 
-Hence, it seems that marginal price logic will be superior here. 
+power that this grid controller has access to. For example, this algorithm works effectively when the Grid Controller
+is currently drawing in power from the utility meter or another grid controller to support its current load balance.
+However, most of the time when it is simply drawing on the battery to funnel to other entities, it doesn't have the
+necessary information and simply relies on its initial price as a fallback value, which doesn't seem to make sense.
+Hence, it seems that marginal price logic will be superior here.
 
-Additionally, contains no logic for implement any concepts of 'local scarcity', i.e. battery charging preference 
-compared to current power flows is not considered. 
+Additionally, contains no logic for implement any concepts of 'local scarcity', i.e. battery charging preference
+compared to current power flows is not considered.
 """
 
 
@@ -773,11 +780,11 @@ class GCWeightedAveragePriceLogic(GridControllerPriceLogic):
         return self._initial_price
 
 
-""" 
-Finds the minimum price among the sources that this device has been allocated to receive from, or from the utility. 
+"""
+Finds the minimum price among the sources that this device has been allocated to receive from, or from the utility.
 If it doesn't meet any of these conditions, return its initial price.
- 
-TODO: This logic does not consider the battery charging preference in its calculations. This should be added. 
+
+TODO: This logic does not consider the battery charging preference in its calculations. This should be added.
 """
 
 
@@ -813,7 +820,7 @@ class GCMarginalPriceLogic(GridControllerPriceLogic):
         else:
             return self._initial_price  # Not enough information from other prices
 
-""" Same as above, but seeks to find the marginal price level that will satisfy all open requests and the 
+""" Same as above, but seeks to find the marginal price level that will satisfy all open requests and the
 desired difference in battery power levels. If there is insufficient allocations, returns 1.1 * highest price"""
 
 
@@ -881,5 +888,3 @@ class GCMarginalPriceLogicB(GridControllerPriceLogic):
 
         else:
             return self._initial_price  # not enough information from other prices
-
-
