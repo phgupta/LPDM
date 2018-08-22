@@ -383,34 +383,38 @@ class GridController(Device):
         remaining = power_change
 
         utility_meters = [key for key in self._connected_devices.keys() if key.startswith("utm")]
-        # If there is power in from utility and the power change is positive (must accept more), reduce that utm flow.
-        # Likewise, if we are selling to utm and power change is negative, reduce how much we sell.
-        """ THIS WAS AN OPTIMIZATION. CAN BE REMOVED OR PUT IN FLAGGED LOGIC"""
-        for utm in utility_meters:
-            if power_change > 0:  # must accept more.
-                if self._loads.get(utm, 0) > 0:
-                    prev_utm_load = self._loads[utm]
-                    self.change_load(utm, max((prev_utm_load - remaining), 0))
-                    new_utm_load = self._loads[utm]
-                    self.send_power_message(utm, new_utm_load)
-                    remaining -= (prev_utm_load - new_utm_load)
-                    if not nonzero_power(remaining): # An insignificant quantity is remaining. Stop talking to utms
-                        break
-            elif power_change < 0:  # must provide more
-                if self._loads.get(utm, 0) < 0:
-                    prev_utm_load = self._loads[utm]
-                    self.change_load(utm, min((prev_utm_load - remaining), 0))
-                    new_utm_load = self._loads[utm]
-                    self.send_power_message(utm, new_utm_load)
-                    remaining -= (prev_utm_load - new_utm_load)
-                    if not nonzero_power(remaining):
-                        break
+        gcs = [gc for gc in self._connected_devices if gc.startswith("gc")]
+        sorted_gcs = sorted(gcs,key=lambda gc: self._connected_devices[gc]._price,reverse=True)
 
         # TODO: Try raising all allocate values up to their limits. Move battery adjustment to after utility meter try.
         # Try adding all the remaining demand onto the battery
         if nonzero_power(remaining) and self._battery:
             self.update_battery()  # make sure we have updated state of charge
             remaining -= self._battery.add_load(remaining)
+
+        # If there is power in from utility and the power change is positive (must accept more), reduce that utm flow.
+        # Likewise, if we are selling to utm and power change is negative, reduce how much we sell.
+        """ THIS WAS AN OPTIMIZATION. CAN BE REMOVED OR PUT IN FLAGGED LOGIC"""
+        for dev in utility_meters+sorted_gcs:
+            if power_change > 0:  # must accept more.
+                if self._loads.get(dev, 0) > 0:
+                    prev_dev_load = self._loads[dev]
+                    self.change_load(dev, max((prev_dev_load - remaining), 0))
+                    new_dev_load = self._loads[dev]
+                    self.send_power_message(dev, new_dev_load)
+                    remaining -= (prev_dev_load - new_dev_load)
+                    # if not nonzero_power(remaining): # An insignificant quantity is remaining. Stop talking to utms
+                    #     break
+            elif power_change < 0:  # must provide more
+                if self._loads.get(dev, 0) < 0:
+                    prev_dev_load = self._loads[dev]
+                    self.change_load(dev, min((prev_dev_load - remaining), 0))
+                    new_dev_load = self._loads[dev]
+                    self.send_power_message(dev, new_dev_load)
+                    remaining -= (prev_dev_load - new_dev_load)
+                    # if not nonzero_power(remaining):
+                    #     break
+
 
         if nonzero_power(remaining):
             if len(utility_meters):
@@ -519,15 +523,18 @@ class GridController(Device):
     def seek_to_obtain_power(self, power_to_obtain):
 
         utility_meters = [key for key in self._connected_devices.keys() if key.startswith("utm")]
+        gcs = [gc for gc in self._connected_devices if gc.startswith("gc")]
+        sorted_gcs = sorted(gcs,key=lambda gc: self._connected_devices[gc]._price)
+
         if power_to_obtain <= 0:
             return
         remaining = power_to_obtain
-        for utm in utility_meters:
-            prev_utm_load = self._loads.get(utm, 0)
-            self.change_load(utm, prev_utm_load + remaining)
-            new_utm_load = self._loads[utm]
-            self.send_power_message(utm, new_utm_load)
-            remaining -= (new_utm_load - prev_utm_load)
+        for dev in utility_meters+sorted_gcs:
+            prev_dev_load = self._loads.get(dev, 0)
+            self.change_load(dev, prev_dev_load + remaining)
+            new_dev_load = self._loads[dev]
+            self.send_power_message(dev, new_dev_load)
+            remaining -= (new_dev_load - prev_dev_load)
             if remaining <= 0:
                 break
         self._battery.add_load(power_to_obtain - remaining)
@@ -543,17 +550,22 @@ class GridController(Device):
     #
     def seek_to_distribute_power(self, power_to_distribute):
         utility_meters = [key for key in self._connected_devices.keys() if key.startswith("utm")]
+        gcs = [gc for gc in self._connected_devices if gc.startswith("gc")]
+        sorted_gcs = sorted(gcs,key=lambda gc: self._connected_devices[gc]._price,reverse=True)
+
         if power_to_distribute <= 0:
             return  # Invalid quantity
         remaining = power_to_distribute
-        for utm in utility_meters:
-            prev_utm_load = self._loads.get(utm, 0)
-            self.change_load(utm, prev_utm_load - remaining)
-            new_utm_load = self._loads[utm]
-            self.send_power_message(utm, new_utm_load)
-            remaining -= (prev_utm_load - new_utm_load)
+        for dev in utility_meters+sorted_gcs:
+            prev_dev_load = self._loads.get(dev, 0)
+            self.change_load(dev, prev_dev_load - remaining)
+            new_dev_load = self._loads[dev]
+            self.send_power_message(dev, new_dev_load)
+            remaining -= (prev_dev_load - new_dev_load)
             if remaining <= 0:
-                break
+                self._battery.add_load(-power_to_distribute + remaining)
+                return
+
         self._battery.add_load(-power_to_distribute + remaining)
 
     # ________________________________LOGGING SPECIFIC FUNCTIONALITY______________________________#

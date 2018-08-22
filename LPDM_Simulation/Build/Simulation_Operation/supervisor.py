@@ -127,11 +127,11 @@ class Supervisor:
         total_demand_curve = [0] * len(prices)
         gcs = (device for device in self._devices.values() if device.get_type() == "grid_controller")
         for gc in gcs:
-            self._logger.info("looping over gc")
+            # self._logger.info("looping over gc")
             connected_devices = gc.get_connected_devices()
             euds = (connected_device for connected_device_id, connected_device in connected_devices.items() if connected_device_id.startswith("eud"))
             for eud in euds:
-                    self._logger.info("hi")
+                    # self._logger.info("hi")
                     total_demand_curve = [a + b for a, b in zip(total_demand_curve, eud.generate_demand_curve(prices))]
         total_demand_curve = zip(prices,total_demand_curve)
         with open('demand.csv', 'w', newline='') as csvfile:
