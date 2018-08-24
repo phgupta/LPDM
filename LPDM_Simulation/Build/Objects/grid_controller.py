@@ -415,7 +415,6 @@ class GridController(Device):
                     # if not nonzero_power(remaining):
                     #     break
 
-
         if nonzero_power(remaining):
             if len(utility_meters):
                 utm = utility_meters[0]

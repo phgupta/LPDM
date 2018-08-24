@@ -61,7 +61,7 @@ class Light(Eud):
     def on(self):
         self._on = True
         self.modulate_power()
-        self._supervisor.update_demand_curve()
+        # self._supervisor.update_demand_curve()
 
     ##
     # Turns the light "off", and stops consuming power. Does not affect this device's ability to receive messages,
