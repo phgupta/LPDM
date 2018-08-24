@@ -29,6 +29,8 @@ class Supervisor:
         self._event_queue = PriorityQueue()  # queue items are device_ids prioritized by next event time
         self._devices = {}  # dictionary of device_id's mapping to their associated devices. All devices in simulation.
         self._logger = logging.getLogger("lpdm")  # Setup logging
+        self._power_flow_state = [] # time series power flow data
+        self._time_of_last_event = 0
 
     ##
     # Method to get the device pointer from a device_id, called by devices when they receive a message from a
@@ -69,15 +71,22 @@ class Supervisor:
 
     def occur_next_event(self):
         device_id, time_of_next_event = self._event_queue.pop()
-        if device_id in self._devices:
-            device = self._devices[device_id]
-            device.update_time(time_of_next_event)  # set the device's local time to the time of next event
-            device.process_events()  # process all events at device's local time
-            if device.has_upcoming_event():
-                device_id, device_next_time = device.report_next_event_time()
-                self.register_event(device_id, device_next_time)  # add the next earliest time for device
-        else:
+        if device_id not in self._devices:
             raise KeyError("Device has not been properly initialized!")
+
+        device = self._devices[device_id]
+        device.update_time(time_of_next_event)  # set the device's local time to the time of next event
+        device.process_events()  # process all events at device's local time
+
+        if self._time_of_last_event != time_of_next_event:
+            # self._logger.info("last time: {}, next time: {}".format(self._time_of_last_event, time_of_next_event))
+            self.update_stats(time_of_next_event) # update the power flow state tracker
+
+        if device.has_upcoming_event():
+            device_id, device_next_time = device.report_next_event_time()
+            self.register_event(device_id, device_next_time)  # add the next earliest time for device
+
+        self._time_of_last_event = time_of_next_event
 
     ##
     # Determines if the simulation is unfinished and there are unprocessed events in its queue
@@ -116,6 +125,12 @@ class Supervisor:
         for device in self._devices.values():
             device.finish(end_time)
         self.total_calcs()
+        with open('power_flow.csv', 'w', newline='') as csvfile:
+            power_keys = list(self._power_flow_state[-1].keys()) # take last data point, which presumably has all keys
+            dict_writer = csv.DictWriter(csvfile,power_keys)
+
+            dict_writer.writeheader()
+            dict_writer.writerows(self._power_flow_state)
 
     def update_demand_curve(self):
         # For each GC
@@ -137,3 +152,12 @@ class Supervisor:
         with open('demand.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerows(total_demand_curve)
+
+    def update_stats(self,time_of_next_event):
+        # self._logger.info("updating_stats")
+        power_state = {}
+        gcs = (device for device in self._devices.values() if device.get_type() == "grid_controller")
+        for gc in gcs:
+            power_state = {**power_state,**gc._loads}
+
+        self._power_flow_state.append({'Time': time_of_next_event, **power_state})
